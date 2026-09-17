@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: silver_order_lines
+    description: >
+      Conformed order lines, one row per genuine line. Exact duplicates collapsed
+      and non-product codes quarantined; everything removed is recoverable from
+      silver_rejected_lines.
+    columns:
+      - name: order_line_key
+        description: Surrogate key over the business grain.
+        data_tests: [not_null, unique]
+      - name: invoice_no
+        data_tests: [not_null]
+      - name: stock_code
+        data_tests: [not_null]
+      - name: quantity
+        data_tests: [not_null]
+      - name: unit_price
+        data_tests: [not_null]
+      - name: invoice_date
+        data_tests: [not_null]
+      - name: customer_key
+        description: Customer id as text, or UNKNOWN for guest checkouts.
+        data_tests: [not_null]
+      - name: country
+        data_tests: [not_null]
+      - name: line_type
+        data_tests:
+          - accepted_values:
+              values: ["sale", "cancellation", "adjustment"]
+
+  - name: silver_rejected_lines
+    description: Audit trail of every row excluded from the silver grain.
+    columns:
+      - name: reject_reason
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["exact_duplicate", "non_product_stock_code"]

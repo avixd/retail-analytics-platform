@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: Sales fact at order-line grain. Signed amounts, so summing gives net.
+    columns:
+      - name: order_line_key
+        data_tests: [not_null, unique]
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships: {to: ref('dim_date'), field: date_key}
+      - name: customer_key_sk
+        data_tests:
+          - not_null
+          - relationships: {to: ref('dim_customer'), field: customer_key_sk}
+      - name: product_key
+        data_tests:
+          - not_null
+          - relationships: {to: ref('dim_product'), field: product_key}
+      - name: country_key
+        data_tests:
+          - not_null
+          - relationships: {to: ref('dim_country'), field: country_key}
+      - name: line_type
+        data_tests:
+          - accepted_values: {values: ["sale", "cancellation", "adjustment"]}
+
+  - name: dim_customer
+    description: Customer dimension including a single UNKNOWN member for guests.
+    columns:
+      - name: customer_key_sk
+        data_tests: [not_null, unique]
+      - name: customer_key
+        data_tests: [not_null, unique]
+
+  - name: dim_product
+    description: Type 1 product dimension derived from transactions.
+    columns:
+      - name: product_key
+        data_tests: [not_null, unique]
+      - name: stock_code
+        data_tests: [not_null, unique]
+      - name: description
+        data_tests: [not_null]
+
+  - name: dim_country
+    columns:
+      - name: country_key
+        data_tests: [not_null, unique]
+      - name: country
+        data_tests: [not_null, unique]
+
+  - name: dim_date
+    description: Generated contiguous calendar covering whole years around the data.
+    columns:
+      - name: date_key
+        data_tests: [not_null, unique]
+      - name: date_day
+        data_tests: [not_null, unique]

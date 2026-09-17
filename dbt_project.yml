@@ -1,0 +1,27 @@
+name: retail_analytics
+version: "1.0.0"
+config-version: 2
+
+profile: retail_analytics
+
+# No telemetry from this project, on a dev machine or in CI.
+flags:
+  send_anonymous_usage_stats: false
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  retail_analytics:
+    staging:
+      +materialized: view
+      +schema: staging
+    silver:
+      +materialized: table
+      +schema: silver
+    gold:
+      +materialized: table
+      +schema: gold

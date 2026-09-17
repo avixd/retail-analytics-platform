@@ -1,0 +1,12 @@
+# Checked in on purpose: DuckDB is a local file, so there are no secrets here and
+# a clone can run `dbt build` with no setup. DBT_PROFILES_DIR should point at the
+# repo root (the Makefile and CI both do this).
+retail_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "data/warehouse.duckdb"
+      threads: 4
+      extensions:
+        - parquet

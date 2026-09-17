@@ -1,0 +1,79 @@
+{
+  "reconciles": true,
+  "rows_by_sheet": {
+    "workbook": {
+      "Year 2009-2010": 525461,
+      "Year 2010-2011": 541910
+    },
+    "parquet": {
+      "Year 2009-2010": 525461,
+      "Year 2010-2011": 541910
+    }
+  },
+  "stats": {
+    "rows": 1067371,
+    "cancellations": 19494,
+    "negative_quantity": 22950,
+    "zero_or_neg_price": 6207,
+    "missing_customer": 243007,
+    "missing_description": 4382,
+    "distinct_invoices": 53628,
+    "distinct_stockcodes": 5305,
+    "distinct_customers": 5942,
+    "distinct_countries": 43
+  },
+  "date_range": [
+    "2009-12-01 07:45:00",
+    "2011-12-09 12:50:00"
+  ],
+  "non_product_stock_codes": [
+    {
+      "stock_code": "POST",
+      "rows": 2122
+    },
+    {
+      "stock_code": "DOT",
+      "rows": 1446
+    },
+    {
+      "stock_code": "M",
+      "rows": 1421
+    },
+    {
+      "stock_code": "C2",
+      "rows": 282
+    },
+    {
+      "stock_code": "D",
+      "rows": 177
+    },
+    {
+      "stock_code": "S",
+      "rows": 104
+    },
+    {
+      "stock_code": "BANK CHARGES",
+      "rows": 102
+    },
+    {
+      "stock_code": "ADJUST",
+      "rows": 67
+    },
+    {
+      "stock_code": "AMAZONFEE",
+      "rows": 43
+    },
+    {
+      "stock_code": "DCGS0058",
+      "rows": 31
+    },
+    {
+      "stock_code": "gift_0001_20",
+      "rows": 29
+    },
+    {
+      "stock_code": "gift_0001_30",
+      "rows": 29
+    }
+  ]
+}

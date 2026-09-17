@@ -1,0 +1,60 @@
+name: dbt build
+
+# The pipeline is rebuilt from the raw source on every push, so the tests run
+# against real data rather than a fixture. A green badge here means the medallion
+# layers and all 50 data tests reconciled from scratch.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ~46 MB from UCI. Cached on the source archive so reruns do not re-download.
+      - name: Cache raw dataset
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: uci-online-retail-ii-v1
+
+      - name: Download source data
+        run: python scripts/download.py
+
+      - name: Build bronze
+        run: python scripts/ingest_bronze.py
+
+      - name: Profile bronze and reconcile against the workbook
+        run: python scripts/profile_bronze.py
+
+      - name: dbt deps
+        run: dbt deps
+        env:
+          DBT_PROFILES_DIR: .
+
+      - name: dbt build
+        run: dbt build
+        env:
+          DBT_PROFILES_DIR: .
+
+      - name: Export gold
+        run: python scripts/export_gold.py
+
+      - name: Upload gold parquet
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold-star-schema
+          path: data/gold/*.parquet
+          retention-days: 14

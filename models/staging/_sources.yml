@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Immutable landing zone. Written by scripts/ingest_bronze.py straight from
+      the UCI workbook with load metadata attached and nothing else changed.
+    meta:
+      external_location: "read_parquet('data/bronze/{name}.parquet')"
+    tables:
+      - name: online_retail
+        description: Both worksheets stacked, 1,067,371 rows.
+        columns:
+          - name: Invoice
+            description: Invoice number. A leading C denotes a cancellation.
+          - name: StockCode
+            description: Product code. Non-numeric codes are not products.
+          - name: Quantity
+            description: Negative on returns, cancellations and adjustments.
+          - name: Price
+            description: Unit price in GBP. Zero or negative on some adjustments.
+          - name: Customer ID
+            description: Null on roughly 23% of rows - guest or untracked checkout.

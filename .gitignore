@@ -1,0 +1,31 @@
+# Data is rebuilt from source, never committed. scripts/download.py fetches the
+# raw workbook; everything downstream is reproducible from it.
+data/raw/
+data/bronze/
+data/gold/
+data/*.duckdb
+data/*.duckdb.wal
+
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Power BI
+*.pbix.bak
+.pbi/
+**/.pbi/localSettings.json
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
