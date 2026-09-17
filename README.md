@@ -234,6 +234,7 @@ cleaning, source-controlled transformations — is identical. Only the runtime d
 |---|---|
 | This README | Problem, scope, assumptions, architecture, requirements |
 | [`docs/bronze-profile.json`](docs/bronze-profile.json) | Generated data profile: counts, nulls, date range, non-product codes |
+| [`docs/power-bi-setup.md`](docs/power-bi-setup.md) | One-time setup for the semantic layer, and why the model is stored as TMDL |
 | `models/**/*.sql` | Every model carries a header explaining the decision it makes |
 | `models/**/_*.yml` | Column-level descriptions and test definitions |
 | `dbt docs generate` | Full lineage graph and column-level documentation |
