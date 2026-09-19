@@ -1,0 +1,33 @@
+/// Calculation group applying time comparisons to any measure: YTD, QTD, MTD, prior year and year-over-year variance. Place Time Intelligence on a visual alongside any measure; Current returns the measure unchanged.
+table 'Time Intelligence'
+	lineageTag: a06e7809-0a52-440e-956f-b68d02a872a7
+
+	/// Time intelligence applied across every measure. Without it, 11 measures times 4 time variants would be 44 measures to maintain, and each new measure would multiply.
+	calculationGroup
+		precedence: 10
+
+		calculationItem Current = SELECTEDMEASURE ()
+
+		calculationItem YTD = CALCULATE ( SELECTEDMEASURE (), DATESYTD ( dim_date[date_day] ) )
+
+		calculationItem QTD = CALCULATE ( SELECTEDMEASURE (), DATESQTD ( dim_date[date_day] ) )
+
+		calculationItem MTD = CALCULATE ( SELECTEDMEASURE (), DATESMTD ( dim_date[date_day] ) )
+
+		calculationItem 'Prior Year' = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+
+		calculationItem 'Prior Year YTD' = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+
+		calculationItem 'YoY Variance' = VAR _current = SELECTEDMEASURE () VAR _prior = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) ) RETURN IF ( NOT ISBLANK ( _current ) && NOT ISBLANK ( _prior ), _current - _prior )
+
+		calculationItem 'YoY Variance %' = VAR _current = SELECTEDMEASURE () VAR _prior = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) ) RETURN DIVIDE ( _current - _prior, _prior )
+
+			formatStringDefinition = "0.0%;-0.0%;0.0%"
+
+	/// Select a time calculation to apply to any measure on the visual.
+	column 'Time Intelligence'
+		dataType: string
+		lineageTag: 211e6ded-07d6-4b3c-87fd-f829870a8e0b
+
+	partition 'Partition_Time Intelligence' = calculationGroup
+

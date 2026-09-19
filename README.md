@@ -54,7 +54,7 @@ implemented as tested code.
 - Ingestion from source with reproducible, checksummed download
 - Medallion layering: bronze (raw), silver (conformed), gold (dimensional)
 - Explicit, tested handling of duplicates, returns, guests and non-products
-- A star schema ready for a semantic layer
+- A star schema and a documented Power BI semantic model on top of it
 - Automated data quality testing in CI
 - A documented mapping to Microsoft Fabric
 
@@ -100,23 +100,7 @@ implemented as tested code.
 
 ## 3. High-Level Architecture
 
-```mermaid
-flowchart TD
-    src["UCI workbook - 2 sheets, 1.07M rows"]
-    bronze["BRONZE - parquet, immutable, load metadata"]
-    stg["STAGING - typed, renamed, classified"]
-    silver["SILVER - conformed grain, 1,027,054 lines"]
-    reject["QUARANTINE - 40,317 rows, each with a reason"]
-    gold["GOLD - star schema, fct_sales plus 4 dimensions"]
-    model["SEMANTIC MODEL - measures, RLS, time intelligence"]
-
-    src --> bronze
-    bronze --> stg
-    stg --> silver
-    stg --> reject
-    silver --> gold
-    gold --> model
-```
+![High-level architecture: source, bronze, staging, silver and quarantine, gold, semantic model](docs/architecture.svg)
 
 Each layer has exactly one job, and the boundary between them is enforced by a test.
 
@@ -146,6 +130,11 @@ Each layer has exactly one job, and the boundary between them is enforced by a t
 | F9 | Conformed dimensional model for BI consumption | `models/gold/` | Relationship tests on all four dimensions |
 | F10 | Contiguous date dimension for time intelligence | `dim_date.sql` | Generated, not derived; uniqueness tested |
 | F11 | Gold consumable by Power BI without a live database | `scripts/export_gold.py` | Five parquet files, 32 MB |
+| F12 | Semantic model versioned as reviewable text | `RetailAnalytics.SemanticModel/` (PBIP / TMDL) | Diffable in git; no binary `.pbix` |
+| F13 | One definition per business measure | 11 measures on `fct_sales` | Figures reconcile to the gold layer (4.6) |
+| F14 | Time comparisons without duplicated measures | `Time Intelligence` calculation group | 8 items verified against yearly totals |
+| F15 | Market-level access control | `Country Manager` role | Filter propagates dimension to fact |
+| F16 | Self-documenting model | Descriptions on every table, visible column and measure | Display folders throughout |
 
 ### 4.2 Technical requirements
 
@@ -207,6 +196,40 @@ descriptions (most-frequent wins, most-recent breaks ties); 335 with no descript
 
 **Net sales after cleaning: £18,925,714.33.**
 
+### 4.6 The semantic model
+
+The gold star schema is surfaced through a Power BI semantic model stored as
+**PBIP/TMDL** in [`RetailAnalytics.SemanticModel/`](RetailAnalytics.SemanticModel/definition),
+so every relationship, measure and role is plain text that diffs and reviews like code.
+
+| Component | Design choice |
+|---|---|
+| Relationships | 4, many-to-one from the fact, single-direction. No bi-directional filtering: on a clean star it buys nothing and creates ambiguity later. |
+| Measures | 11, all on `fct_sales` in numbered display folders — Revenue, Volume, Customers, Products. Raw fact columns are hidden, so reports go through the measures. |
+| Time intelligence | A calculation group (YTD, QTD, MTD, Prior Year, Prior Year YTD, YoY Variance, YoY Variance %) rather than duplicated measures. Eleven measures times four variants would otherwise be 44 to maintain. |
+| Security | `Country Manager` role filters `dim_country` and propagates to the fact through the relationship, so the 1.03M-row table is never filtered directly. |
+| Date table | `dim_date` marked on `date_day`; month and day names sorted by number, not alphabetically. |
+| Hygiene | Implicit measures discouraged; surrogate keys and sort helpers hidden; keys and non-additive columns never summarised. |
+| Documentation | A description on the model, every table, every visible column and every measure. |
+
+Two measure decisions carry business meaning:
+
+- **`Customers` excludes the `UNKNOWN` guest member.** Counting it would register all guest
+  checkouts as one enormous customer and distort every per-customer average.
+- **`Guest Revenue %` keeps guest trade visible** — 13.6% of net revenue — instead of letting it
+  vanish from customer analysis.
+
+**Verified by DAX query against the live model, not assumed:**
+
+| Measure | Result | Reconciles to |
+|---|---|---|
+| Net Sales | £18,925,714.33 | Gold layer in DuckDB, to the penny |
+| Gross Sales − Cancellations | £19,642,140.30 − £716,425.97 | Net Sales |
+| Customers | 5,876 | 5,877 dimension rows less `UNKNOWN` |
+| United Kingdom net sales | £16,167,221.21 | Gold layer — proves the relationships filter |
+| 2009 + 2010 + 2011 | £778,179.94 + £9,135,190.90 + £9,012,343.49 | Net Sales total |
+| 2011 Prior Year | £9,135,190.90 | 2010 Current — calculation group is correct |
+
 ---
 
 ## 5. Mapping to Microsoft Fabric
@@ -221,6 +244,7 @@ Fabric, stated plainly so nothing is overclaimed:
 | dbt tests | Data quality rules |
 | `dbt docs` lineage | Fabric lineage view |
 | Gold parquet to Power BI | Direct Lake over the Lakehouse |
+| PBIP / TMDL semantic model | Same model, deployed to a Fabric workspace |
 | `profiles.yml` targets | Workspace environments |
 
 The engineering practice — layered responsibility, tested boundaries, auditable
@@ -235,6 +259,8 @@ cleaning, source-controlled transformations — is identical. Only the runtime d
 | This README | Problem, scope, assumptions, architecture, requirements |
 | [`docs/bronze-profile.json`](docs/bronze-profile.json) | Generated data profile: counts, nulls, date range, non-product codes |
 | [`docs/power-bi-setup.md`](docs/power-bi-setup.md) | One-time setup for the semantic layer, and why the model is stored as TMDL |
+| [`RetailAnalytics.SemanticModel/definition/`](RetailAnalytics.SemanticModel/definition) | The semantic model as TMDL: tables, measures, relationships, calculation group, role |
+| [`docs/architecture.svg`](docs/architecture.svg) | The high-level architecture diagram |
 | `models/**/*.sql` | Every model carries a header explaining the decision it makes |
 | `models/**/_*.yml` | Column-level descriptions and test definitions |
 | `dbt docs generate` | Full lineage graph and column-level documentation |

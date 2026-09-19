@@ -1,0 +1,8 @@
+/// Row-level security scoped to a single market. The filter sits on dim_country and propagates to the fact through the one-to-many relationship, so the 1.03M-row table is never filtered directly. A production version would swap the literal for USERPRINCIPALNAME() against a mapping table.
+role 'Country Manager'
+	modelPermission: read
+
+	tablePermission dim_country = dim_country[country] = "United Kingdom"
+
+	annotation PBI_Id = 4eaabbdec16b457ea2e308c67ce42eef
+

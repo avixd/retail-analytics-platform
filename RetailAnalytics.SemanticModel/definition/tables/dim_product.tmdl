@@ -1,0 +1,131 @@
+/// One row per stock code (type 1). Derived from transactions because the source has no product master: where a code carried several descriptions, the most frequently used wins and the most recent breaks ties. Codes with no description are labelled rather than left blank.
+table dim_product
+	lineageTag: 66afa004-b4cf-4adf-a320-cc6565e33d3e
+
+	/// Surrogate key; joins to fct_sales.
+	column product_key
+		dataType: string
+		isHidden
+		lineageTag: 4ba3ccfd-8736-49d3-801b-88dd2ceecec5
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Lifetime units sold. A static attribute; use [Units Sold] for reporting.
+	column units_sold
+		dataType: double
+		formatString: #,##0
+		displayFolder: Performance
+		lineageTag: 15eba7da-cc1a-45bb-99f3-0e75c9f06804
+		summarizeBy: none
+		sourceColumn: units_sold
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Source stock code. Five digits, optionally with a letter suffix.
+	column stock_code
+		dataType: string
+		displayFolder: Product
+		lineageTag: 48117ac3-6abd-4460-99af-82d67381e546
+		summarizeBy: none
+		sourceColumn: stock_code
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Canonical product name: the most frequently used description for the code.
+	column description
+		dataType: string
+		displayFolder: Product
+		lineageTag: 4a827e55-96b0-4156-b1d8-fb6e9f11f48b
+		summarizeBy: none
+		sourceColumn: description
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True for the 335 codes with no description on any line.
+	column is_description_missing
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Product
+		lineageTag: 2cbc363e-45d6-4d27-97f2-c734ff16a192
+		summarizeBy: none
+		sourceColumn: is_description_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	/// How many distinct descriptions the code carried in the source - a data quality signal.
+	column description_variants
+		dataType: int64
+		formatString: 0
+		displayFolder: Product
+		lineageTag: 6f498e6a-22dc-43f1-ae83-a5aa8afc88ce
+		summarizeBy: none
+		sourceColumn: description_variants
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Date the product first sold.
+	column first_sold_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Lifecycle
+		lineageTag: 6e2008f0-5ed0-486a-a217-0a0d9849dcd4
+		summarizeBy: none
+		sourceColumn: first_sold_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Date the product last sold.
+	column last_sold_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Lifecycle
+		lineageTag: 809b2cec-2cbd-4151-af57-3c52fd97767c
+		summarizeBy: none
+		sourceColumn: last_sold_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Distinct invoices containing the product. A static attribute; use the measures for reporting.
+	column invoice_count
+		dataType: int64
+		formatString: 0
+		displayFolder: Performance
+		lineageTag: f8fd2078-219d-48df-9fce-4340936a7258
+		summarizeBy: none
+		sourceColumn: invoice_count
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Average unit price across all lines. Non-additive.
+	column avg_unit_price
+		dataType: double
+		formatString: \£#,##0.00
+		displayFolder: Performance
+		lineageTag: a4d23365-d53d-4a28-8329-23018294433d
+		summarizeBy: none
+		sourceColumn: avg_unit_price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition dim_product = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(
+				        File.Contents(GoldFolder & "\dim_product.parquet")
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

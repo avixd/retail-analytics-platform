@@ -1,0 +1,28 @@
+/// Retail Analytics Platform semantic model. Star schema over the dbt gold layer: one order-line fact (fct_sales) and four conformed dimensions. All measures live on fct_sales in numbered display folders; time comparisons come from the Time Intelligence calculation group rather than duplicated measures. Source: UCI Online Retail II, CC BY 4.0.
+model Model
+	culture: en-CA
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-CA
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["dim_date","GoldFolder","dim_country","dim_product","dim_customer","fct_sales"]
+
+annotation PBI_ProTooling = ["DevMode","MCP-PBIModeling"]
+
+ref table dim_date
+ref table dim_country
+ref table dim_product
+ref table dim_customer
+ref table fct_sales
+ref table 'Time Intelligence'
+
+ref role 'Country Manager'
+
+ref cultureInfo en-CA
+

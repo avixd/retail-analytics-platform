@@ -1,0 +1,121 @@
+/// One row per shipping country. The authoritative geography for revenue, carried on the order rather than on the customer. Row-level security (Country Manager) filters here and propagates to the fact.
+table dim_country
+	lineageTag: 1290241b-396d-41c4-8207-9d3364a7a81f
+
+	/// Surrogate key; joins to fct_sales.
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 908fb02e-ab96-4d4d-b9e3-f6aa6ad8918f
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Shipping country. The filter point for the Country Manager role.
+	column country
+		dataType: string
+		displayFolder: Country
+		lineageTag: 77e1615d-318b-4513-824c-496329f892bc
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True for the United Kingdom - the domestic versus export split.
+	column is_domestic
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Country
+		lineageTag: bb7212c6-ed51-4927-952e-6c5bf880d013
+		summarizeBy: none
+		sourceColumn: is_domestic
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True for Unspecified and European Community, which are not real countries.
+	column is_unallocated
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Country
+		lineageTag: 66d87907-58e5-41d2-9108-d9b82b1e6037
+		summarizeBy: none
+		sourceColumn: is_unallocated
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Distinct invoices shipped to the country. Static attribute.
+	column invoice_count
+		dataType: int64
+		formatString: 0
+		displayFolder: Activity
+		lineageTag: 517ff221-49f2-4c9c-ba37-ee3ec899d884
+		summarizeBy: none
+		sourceColumn: invoice_count
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Distinct customers in the country. Static attribute.
+	column customer_count
+		dataType: int64
+		formatString: 0
+		displayFolder: Activity
+		lineageTag: 666a6de2-b911-4733-908f-43f2d078dbc7
+		summarizeBy: none
+		sourceColumn: customer_count
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Lifetime gross sales to the country. Static attribute; use the measures for reporting.
+	column gross_sales
+		dataType: double
+		formatString: \£#,##0.00
+		displayFolder: Activity
+		lineageTag: ec6780f6-d4e1-4811-b35a-7b5487e52faf
+		summarizeBy: none
+		sourceColumn: gross_sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// First order shipped to the country.
+	column first_order_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Activity
+		lineageTag: 473bbab4-2526-4a93-b806-446c23526b51
+		summarizeBy: none
+		sourceColumn: first_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Most recent order shipped to the country.
+	column last_order_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Activity
+		lineageTag: 8acad71f-aad7-4840-9512-a0509f0e1276
+		summarizeBy: none
+		sourceColumn: last_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition dim_country = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(
+				        File.Contents(GoldFolder & "\dim_country.parquet")
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

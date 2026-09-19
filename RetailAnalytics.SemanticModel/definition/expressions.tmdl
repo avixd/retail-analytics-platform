@@ -1,0 +1,7 @@
+expression GoldFolder = "C:\path\to\retail-analytics-platform\data\gold" meta [IsParameterQuery=true, Type="Any", IsParameterQueryRequired=true]
+	lineageTag: 617a3b12-3544-41de-9b01-7dd1c44b8bd2
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+

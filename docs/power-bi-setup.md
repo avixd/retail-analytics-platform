@@ -33,10 +33,14 @@ New file, then `Home → Transform data` to open Power Query.
 |---|---|
 | Name | `GoldFolder` |
 | Type | Text |
-| Current Value | `C:\Users\Avi\OneDrive\Desktop\retail-analytics-platform\data\gold` |
+| Current Value | the absolute path to *your* clone's `data\gold` folder |
 
 Every query reads from this, so moving the repo or handing it to someone else is a
 one-value change rather than five query edits.
+
+The committed value is a placeholder, `C:\path\to\retail-analytics-platform\data\gold`,
+so the repository carries no path from any developer's machine. Set it to your own clone
+after opening.
 
 ## Step 3 — Create the five queries
 
@@ -138,20 +142,29 @@ single `.pbix`, the PBIP setting did not take — revisit step 1.
 
 ---
 
-## What happens next
+## What the model contains
 
-Once the project exists, the rest is authored as text and committed:
+The semantic layer is complete and documented in the README, section 4.6: four
+relationships, eleven measures, a time intelligence calculation group, a
+`Country Manager` role, and descriptions on every table, visible column and measure.
 
-| Work | Where |
+## Working with the PBIP safely
+
+**While Power BI Desktop has the project open, Desktop owns the files.** It treats its
+in-memory model as authoritative and rewrites `definition/` on every save. Editing TMDL
+on disk underneath an open Desktop session is silently reverted the next time anyone
+saves. That happened twice while building this model.
+
+Two safe ways to change the model:
+
+| Route | When |
 |---|---|
-| Relationships (4, single-direction, one-to-many) | `definition/relationships.tmdl` |
-| Measures — revenue, AOV, returns rate, retention | `definition/tables/_measures.tmdl` |
-| Calculation group for time intelligence | `definition/tables/Time Intelligence.tmdl` |
-| RLS role by country | `definition/roles/*.tmdl` |
-| Column formatting, descriptions, hidden keys | per-table TMDL |
-| Date table marked as such | `dim_date.tmdl` |
+| **External tool against the live model** - Tabular Editor, or the Power BI MCP over the local Analysis Services port - then **save in Desktop** | Desktop is open. This is how this model was built. |
+| **Edit TMDL on disk** | Desktop is **closed**. Validate before reopening. |
 
-Reopen Power BI Desktop afterwards to refresh and build the report pages.
+One TMDL rule worth knowing, because it broke the first load: a `///` description must
+be followed *immediately* by the declaration it describes. A blank line after `///` is
+a parse error (`Unexpected line type: Empty`). Use `//` for ordinary comments.
 
 ## Notes
 

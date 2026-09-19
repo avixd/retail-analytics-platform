@@ -29,3 +29,7 @@ __pycache__/
 .idea
 .DS_Store
 Thumbs.db
+
+# Local recovery scaffolding from building the semantic model. Holds a copy of
+# expressions.tmdl with a machine-specific path, so it must never be published.
+.model-backup/

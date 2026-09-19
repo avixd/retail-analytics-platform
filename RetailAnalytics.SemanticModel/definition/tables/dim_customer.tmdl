@@ -1,0 +1,157 @@
+/// One row per customer plus a single UNKNOWN member representing all guest checkouts (22.7% of lines have no customer id). Country here is the most recent one seen; use dim_country for geography, because 12 customers ordered from more than one country.
+table dim_customer
+	lineageTag: df334040-4c7d-418a-a51b-3d865963cf03
+
+	/// Surrogate key; joins to fct_sales.
+	column customer_key_sk
+		dataType: string
+		isHidden
+		lineageTag: aa87f77a-09c8-489e-b4de-c292332388c2
+		summarizeBy: none
+		sourceColumn: customer_key_sk
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True only for the UNKNOWN member that aggregates all guest checkouts.
+	column is_guest
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Customer
+		lineageTag: 723bc5b5-b06b-4c15-8d76-64b4a22d1f3e
+		summarizeBy: none
+		sourceColumn: is_guest
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Source customer id as text, or UNKNOWN for the single guest-checkout member.
+	column customer_key
+		dataType: string
+		displayFolder: Customer
+		lineageTag: 0d6d855c-654a-447e-b84a-0ea7d63b5212
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Most recent country the customer ordered from. Use dim_country for revenue geography.
+	column country
+		dataType: string
+		displayFolder: Customer
+		lineageTag: 3388ea4e-70fc-4148-893f-bf1873f1f412
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True for the 12 customers who ordered from more than one country.
+	column has_multiple_countries
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Customer
+		lineageTag: d8b08cb5-57b1-46dc-b259-90edec0d8bf3
+		summarizeBy: none
+		sourceColumn: has_multiple_countries
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Date of the customer's first order.
+	column first_order_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Lifecycle
+		lineageTag: 82de2f23-7e71-4230-8b98-0c7560a3f3cf
+		summarizeBy: none
+		sourceColumn: first_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Date of the customer's most recent order.
+	column last_order_date
+		dataType: dateTime
+		formatString: Long Date
+		displayFolder: Lifecycle
+		lineageTag: 6150955c-3911-403b-ac62-8b0ac80152b6
+		summarizeBy: none
+		sourceColumn: last_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Month of first order - the acquisition cohort for retention analysis.
+	column cohort_month
+		dataType: dateTime
+		formatString: General Date
+		displayFolder: Lifecycle
+		lineageTag: 64f7bcfd-8f1e-4801-af05-d6e3f492b13d
+		summarizeBy: none
+		sourceColumn: cohort_month
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Distinct invoices placed across the customer's lifetime.
+	column order_count
+		dataType: int64
+		formatString: 0
+		displayFolder: Lifecycle
+		lineageTag: 9c072619-fe1e-46f1-b24f-e47002383d67
+		summarizeBy: none
+		sourceColumn: order_count
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Lifetime sales before cancellations. A static attribute for banding customers; for reporting use the measures.
+	column gross_sales
+		dataType: double
+		formatString: \£#,##0.00
+		displayFolder: Lifetime Value
+		lineageTag: 7979636a-b9ff-4106-8463-36e4e81f75d2
+		summarizeBy: none
+		sourceColumn: gross_sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Lifetime cancellation value (negative).
+	column cancellations
+		dataType: double
+		formatString: \£#,##0.00
+		displayFolder: Lifetime Value
+		lineageTag: cb50c0ee-48f2-471d-bcd6-0afe407493d6
+		summarizeBy: none
+		sourceColumn: cancellations
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Lifetime net value - gross plus cancellations.
+	column net_sales
+		dataType: double
+		formatString: \£#,##0.00
+		displayFolder: Lifetime Value
+		lineageTag: ec650c56-e736-4a38-a77d-3eb50f6bc113
+		summarizeBy: none
+		sourceColumn: net_sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition dim_customer = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(
+				        File.Contents(GoldFolder & "\dim_customer.parquet")
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

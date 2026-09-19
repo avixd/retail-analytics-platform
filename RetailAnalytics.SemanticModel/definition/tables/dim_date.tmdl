@@ -1,0 +1,187 @@
+/// Contiguous calendar covering whole years 2009-2011, marked as the model's date table on date_day. Generated rather than derived from invoices, so time intelligence never hits a gap. Fiscal columns assume an April year start (UK retail convention).
+table dim_date
+	lineageTag: fb2e80f2-43f5-4f02-91d2-a76115f30a9a
+	dataCategory: Time
+
+	/// Surrogate key in yyyymmdd form; joins to fct_sales.
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 37c768f8-4963-41c6-a81e-f7ebc731a52e
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Calendar date. The column the model's date table is marked on.
+	column date_day
+		dataType: dateTime
+		isUnique
+		formatString: Long Date
+		displayFolder: Calendar
+		lineageTag: b88308c0-d6c4-4aa5-9385-625b2f942ea0
+		summarizeBy: none
+		sourceColumn: date_day
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Calendar year.
+	column calendar_year
+		dataType: int64
+		formatString: 0
+		displayFolder: Calendar
+		lineageTag: b47ae889-7012-47d3-a81b-d480df3031b2
+		summarizeBy: sum
+		sourceColumn: calendar_year
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Calendar quarter, 1-4.
+	column calendar_quarter
+		dataType: int64
+		formatString: 0
+		displayFolder: Calendar
+		lineageTag: 9f33150e-4ba8-405b-b560-35bb18a8880c
+		summarizeBy: sum
+		sourceColumn: calendar_quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Month number 1-12. Hidden sort key for the month name columns.
+	column month_number
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 61090c2e-9edc-4f43-afd9-f47c9f7aa7dd
+		summarizeBy: sum
+		sourceColumn: month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Full month name, sorted by month number rather than alphabetically.
+	column month_name
+		dataType: string
+		displayFolder: Calendar
+		lineageTag: 009a4c30-db96-400d-bcbb-a6541bae5c7a
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Three-letter month name, sorted by month number.
+	column month_short
+		dataType: string
+		displayFolder: Calendar
+		lineageTag: d6be2f31-46aa-4113-8d28-ce87ba073923
+		summarizeBy: none
+		sourceColumn: month_short
+		sortByColumn: month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	/// First day of the month - use for monthly trend axes.
+	column month_start
+		dataType: dateTime
+		formatString: General Date
+		displayFolder: Calendar
+		lineageTag: 248f4ac0-5901-4980-a633-88798fd512fd
+		summarizeBy: none
+		sourceColumn: month_start
+
+		annotation SummarizationSetBy = Automatic
+
+	/// yyyymm. Hidden sort key.
+	column year_month_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e97c7439-4729-422a-9ffc-d1592a8df204
+		summarizeBy: sum
+		sourceColumn: year_month_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// ISO week number.
+	column iso_week
+		dataType: int64
+		formatString: 0
+		displayFolder: Calendar
+		lineageTag: c926433a-a76b-4baa-a010-b94fee510117
+		summarizeBy: sum
+		sourceColumn: iso_week
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Day number, 0 = Sunday. Hidden sort key for day_name.
+	column day_of_week
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4eaf32de-ce83-441f-8516-d12d0033d032
+		summarizeBy: sum
+		sourceColumn: day_of_week
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Day of the week, sorted by day number rather than alphabetically.
+	column day_name
+		dataType: string
+		displayFolder: Calendar
+		lineageTag: 2aa81fee-9001-4d68-a689-dc0adec35d1c
+		summarizeBy: none
+		sourceColumn: day_name
+		sortByColumn: day_of_week
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True on Saturday and Sunday.
+	column is_weekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Calendar
+		lineageTag: bf4fec95-2610-488e-b3fe-4fc167ce7c18
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Fiscal year, April start: FY2010 runs Apr-2010 to Mar-2011.
+	column fiscal_year
+		dataType: int64
+		formatString: 0
+		displayFolder: Fiscal
+		lineageTag: 800ed12d-e21a-4cde-b123-7ce769b35700
+		summarizeBy: sum
+		sourceColumn: fiscal_year
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Month of the fiscal year, 1 = April.
+	column fiscal_month_number
+		dataType: int64
+		formatString: 0
+		displayFolder: Fiscal
+		lineageTag: 51597c6d-3bac-4bc8-a326-a45babfd2086
+		summarizeBy: sum
+		sourceColumn: fiscal_month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(
+				        File.Contents(GoldFolder & "\dim_date.parquet")
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

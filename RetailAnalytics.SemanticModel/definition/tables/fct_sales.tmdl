@@ -1,0 +1,271 @@
+/// Sales fact at order-line grain: one row per genuine line after cleaning, 1,027,054 rows. Amounts are signed, so summing gives net revenue; use the measures rather than the raw columns. Exact duplicates and non-product stock codes were quarantined upstream in dbt and are not in this table.
+table fct_sales
+	lineageTag: 3739ee8f-b889-43db-a3e3-321f61046dd9
+
+	/// Net revenue: sales less cancellations. The default revenue measure, because signed amounts make net the honest answer - gross has to be asked for explicitly.
+	measure 'Net Sales' = SUM ( fct_sales[line_amount] )
+		formatString: \£#,##0;(\£#,##0);\£#,##0
+		displayFolder: 1. Revenue
+		lineageTag: 9bec3607-c367-4484-bc00-abcbac0b72ad
+
+	/// Revenue before cancellations are deducted.
+	measure 'Gross Sales' = SUM ( fct_sales[gross_sales_amount] )
+		formatString: \£#,##0;(\£#,##0);\£#,##0
+		displayFolder: 1. Revenue
+		lineageTag: 7e75f884-fb42-4ffa-989f-ca920d4e5432
+
+	/// Value of cancelled lines, returned positive so it reads as a magnitude rather than a negative bar.
+	measure Cancellations = -1 * SUM ( fct_sales[cancellation_amount] )
+		formatString: \£#,##0;(\£#,##0);\£#,##0
+		displayFolder: 1. Revenue
+		lineageTag: 8c838933-ff9d-4cf5-a396-e4f26dc8ee69
+
+	/// Cancellations as a share of gross. DIVIDE handles the empty-filter case rather than raising a division error.
+	measure 'Cancellation Rate' = DIVIDE ( [Cancellations], [Gross Sales] )
+		formatString: 0.0%
+		displayFolder: 1. Revenue
+		lineageTag: 1152885d-2c8b-428f-ad6e-0f204125699d
+
+	/// Units on sale lines only, so cancellations do not net out volume.
+	measure 'Units Sold' = SUM ( fct_sales[units_sold] )
+		formatString: #,##0
+		displayFolder: 2. Volume
+		lineageTag: 363a7d3e-513a-4a07-b566-83d25cc49bab
+
+	/// Distinct invoices in context - the order count, not the line count.
+	measure Orders = DISTINCTCOUNT ( fct_sales[invoice_no] )
+		formatString: #,##0
+		displayFolder: 2. Volume
+		lineageTag: 52ae164d-343e-478f-98e7-6a4f2f508ee6
+
+	/// Average order value, computed per invoice rather than per line.
+	measure 'Average Order Value' = DIVIDE ( [Net Sales], [Orders] )
+		formatString: \£#,##0.00
+		displayFolder: 2. Volume
+		lineageTag: 010c48bd-503c-496b-b6a9-aaa4559f43d5
+
+	/// Identified customers, excluding the UNKNOWN guest member which would otherwise register as one enormous customer and distort every average.
+	measure Customers = CALCULATE ( DISTINCTCOUNT ( fct_sales[customer_key_sk] ), fct_sales[is_guest] = FALSE )
+		formatString: #,##0
+		displayFolder: 3. Customers
+		lineageTag: 27e61ac9-197d-4d2d-b84a-f9618b04644e
+
+	/// Share of revenue from guest checkouts. 22.7% of lines have no customer id; this keeps that visible rather than silently absent.
+	measure 'Guest Revenue %' = DIVIDE ( CALCULATE ( [Net Sales], fct_sales[is_guest] = TRUE ), [Net Sales] )
+		formatString: 0.0%
+		displayFolder: 3. Customers
+		lineageTag: 7590bb4c-8dbd-4826-acab-c7b494e70c91
+
+	/// Revenue per identified customer.
+	measure 'Sales per Customer' = DIVIDE ( CALCULATE ( [Net Sales], fct_sales[is_guest] = FALSE ), [Customers] )
+		formatString: \£#,##0.00
+		displayFolder: 3. Customers
+		lineageTag: 88572c13-65fd-497a-af24-eb2725f8706f
+
+	/// Products that actually sold in context, not the size of the catalogue.
+	measure 'Products Sold' = DISTINCTCOUNT ( fct_sales[product_key] )
+		formatString: #,##0
+		displayFolder: 4. Products
+		lineageTag: 163a5119-6e14-40b3-a41f-782eee87e882
+
+	/// Surrogate key for the order line, unique in the fact.
+	column order_line_key
+		dataType: string
+		isHidden
+		lineageTag: 746f19ce-77eb-40b7-be43-69198009bddc
+		summarizeBy: none
+		sourceColumn: order_line_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Foreign key to dim_date (yyyymmdd).
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e833d883-b274-4ee4-86ab-2fb7a399254c
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Foreign key to dim_customer. Guest checkouts map to the UNKNOWN member.
+	column customer_key_sk
+		dataType: string
+		isHidden
+		lineageTag: 7eb94d53-a4d2-42e4-af6f-90ea181cdc03
+		summarizeBy: none
+		sourceColumn: customer_key_sk
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Foreign key to dim_product.
+	column product_key
+		dataType: string
+		isHidden
+		lineageTag: d961e624-4c32-4091-9774-4f7c9337f4b3
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Foreign key to dim_country.
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 64049bd9-b408-41b1-9e25-3893ba84acbc
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Invoice number - a degenerate dimension. Prefixed C on cancellation invoices.
+	column invoice_no
+		dataType: string
+		displayFolder: Order Line
+		lineageTag: 50645322-84a1-4c65-9d9e-9ac009da049b
+		summarizeBy: none
+		sourceColumn: invoice_no
+
+		annotation SummarizationSetBy = Automatic
+
+	/// sale, cancellation or adjustment. Adjustments are zero-value stock write-offs.
+	column line_type
+		dataType: string
+		displayFolder: Order Line
+		lineageTag: e55680e3-f785-46c1-80ff-e8f8413ac097
+		summarizeBy: none
+		sourceColumn: line_type
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True when the line is on a cancellation (C-prefixed) invoice.
+	column is_cancellation
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Order Line
+		lineageTag: 0ebeab9d-d550-4c2b-b48c-aa8c8272155a
+		summarizeBy: none
+		sourceColumn: is_cancellation
+
+		annotation SummarizationSetBy = Automatic
+
+	/// True for guest checkouts with no customer id.
+	column is_guest
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		displayFolder: Order Line
+		lineageTag: 5b66be99-65aa-490c-a4ee-2fd5e424d379
+		summarizeBy: none
+		sourceColumn: is_guest
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Signed line quantity: negative on cancellations and adjustments. Hidden - use [Units Sold].
+	column quantity
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4668f432-4150-43be-ac58-9b748b665b17
+		summarizeBy: none
+		sourceColumn: quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Unit price in GBP. Non-additive, so never summed. Hidden - price analysis belongs in measures.
+	column unit_price
+		dataType: double
+		isHidden
+		lineageTag: e845dcb2-b0d0-4a10-b793-b79f22c20fd9
+		summarizeBy: none
+		sourceColumn: unit_price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Signed line value (quantity x unit price). Hidden - use [Net Sales].
+	column line_amount
+		dataType: double
+		isHidden
+		lineageTag: 1e0dc21d-65a0-485c-ae48-59e81623e94c
+		summarizeBy: none
+		sourceColumn: line_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Line value on sale lines, zero otherwise. Hidden - use [Gross Sales].
+	column gross_sales_amount
+		dataType: double
+		isHidden
+		lineageTag: 2692c662-bacd-4de4-8ed8-9d6c7fe47e12
+		summarizeBy: none
+		sourceColumn: gross_sales_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Line value on cancellation lines (negative), zero otherwise. Hidden - use [Cancellations].
+	column cancellation_amount
+		dataType: double
+		isHidden
+		lineageTag: d422f4db-8447-443a-80b1-26ae5cb1a135
+		summarizeBy: none
+		sourceColumn: cancellation_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Quantity on sale lines only, zero otherwise. Hidden - use [Units Sold].
+	column units_sold
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 78aff5ff-2677-428f-b8c9-2be913eb0202
+		summarizeBy: none
+		sourceColumn: units_sold
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Invoice timestamp to the second. Hidden; retained for intraday analysis and for the duplicate-detection evidence.
+	column invoice_ts
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: 9b0229b4-13ec-435a-8d4c-5a0c9d0d7c67
+		summarizeBy: none
+		sourceColumn: invoice_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Invoice date. Hidden so that dates are always sliced through dim_date, which time intelligence depends on.
+	column invoice_date
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 0d500df3-e393-441f-bf66-1b92f6953277
+		summarizeBy: none
+		sourceColumn: invoice_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition fct_sales = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(
+				        File.Contents(GoldFolder & "\fct_sales.parquet")
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 600" width="760" height="600" role="img" aria-labelledby="t d">
+  <title id="t">Retail Analytics Platform - high-level architecture</title>
+  <desc id="d">UCI workbook lands in bronze, is typed and classified in staging, then splits: 1,027,054 lines conform into silver while 40,317 rows go to quarantine with a reason. Silver is modelled into a gold star schema, which feeds the Power BI semantic model.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
+    </marker>
+    <style>
+      .t { font: 700 14px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1f2328; }
+      .s { font: 400 12.5px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
+      .c { font: 400 12px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
+      .edge { stroke: #57606a; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+
+  <!-- Own light panel, so the diagram reads on GitHub's dark theme too -->
+  <rect x="0.5" y="0.5" width="759" height="599" rx="14" fill="#ffffff" stroke="#d0d7de"/>
+
+  <!-- Source -->
+  <rect x="40" y="24" width="360" height="64" rx="10" fill="#f6f8fa" stroke="#8c959f"/>
+  <text class="t" x="220" y="51" text-anchor="middle">SOURCE</text>
+  <text class="s" x="220" y="72" text-anchor="middle">UCI Online Retail II workbook - 2 sheets, 1.07M rows</text>
+
+  <!-- Bronze -->
+  <rect x="40" y="112" width="360" height="64" rx="10" fill="#fbeee4" stroke="#b8733a"/>
+  <text class="t" x="220" y="139" text-anchor="middle">BRONZE</text>
+  <text class="s" x="220" y="160" text-anchor="middle">parquet, immutable, load metadata + SHA-256</text>
+
+  <!-- Staging -->
+  <rect x="40" y="200" width="360" height="64" rx="10" fill="#eef2f7" stroke="#6e7f96"/>
+  <text class="t" x="220" y="227" text-anchor="middle">STAGING</text>
+  <text class="s" x="220" y="248" text-anchor="middle">typed, renamed, every line classified</text>
+
+  <!-- Silver -->
+  <rect x="40" y="288" width="360" height="64" rx="10" fill="#f1f3f5" stroke="#8a939e"/>
+  <text class="t" x="220" y="315" text-anchor="middle">SILVER</text>
+  <text class="s" x="220" y="336" text-anchor="middle">conformed grain - 1,027,054 lines</text>
+
+  <!-- Quarantine -->
+  <rect x="460" y="288" width="260" height="64" rx="10" fill="#fdecec" stroke="#cf4c4c"/>
+  <text class="t" x="590" y="315" text-anchor="middle">QUARANTINE</text>
+  <text class="s" x="590" y="336" text-anchor="middle">40,317 rows, each with a reason</text>
+
+  <!-- Gold -->
+  <rect x="40" y="376" width="360" height="64" rx="10" fill="#fdf6e0" stroke="#c9a227"/>
+  <text class="t" x="220" y="403" text-anchor="middle">GOLD</text>
+  <text class="s" x="220" y="424" text-anchor="middle">star schema - fct_sales + 4 dimensions</text>
+
+  <!-- Semantic model -->
+  <rect x="40" y="464" width="360" height="64" rx="10" fill="#efebfe" stroke="#7c5cfc"/>
+  <text class="t" x="220" y="491" text-anchor="middle">SEMANTIC MODEL</text>
+  <text class="s" x="220" y="512" text-anchor="middle">11 measures, time intelligence, RLS</text>
+
+  <!-- Edges -->
+  <line class="edge" x1="220" y1="88"  x2="220" y2="110" marker-end="url(#arrow)"/>
+  <line class="edge" x1="220" y1="176" x2="220" y2="198" marker-end="url(#arrow)"/>
+  <line class="edge" x1="220" y1="264" x2="220" y2="286" marker-end="url(#arrow)"/>
+  <polyline class="edge" points="400,232 590,232 590,286" marker-end="url(#arrow)"/>
+  <line class="edge" x1="220" y1="352" x2="220" y2="374" marker-end="url(#arrow)"/>
+  <line class="edge" x1="220" y1="440" x2="220" y2="462" marker-end="url(#arrow)"/>
+
+  <!-- Reconciliation note beside the split -->
+  <text class="c" x="460" y="382">kept + quarantined = staging</text>
+  <text class="c" x="460" y="400">1,027,054 + 40,317 = 1,067,371</text>
+
+  <!-- Caption -->
+  <text class="c" x="380" y="570" text-anchor="middle">Each boundary is enforced by a dbt test - 50 tests run in CI on every push</text>
+</svg>
